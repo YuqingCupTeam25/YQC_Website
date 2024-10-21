@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bookmark Modal with Bootstrap</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+
+    <div class="container">
+        <h2>My Webpage</h2>
+        <p>This is your homepage content. Click the button below to open the bookmark modal.</p>
+
+        <!-- Button to Open the Modal -->
+        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#bookmarkModal">
+            Add Favorite Websites
+        </button>
+
+        <!-- The Modal -->
+        <div class="modal fade" id="bookmarkModal" tabindex="-1" role="dialog" aria-labelledby="bookmarkModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="bookmarkModalLabel">Add Your Favorite Websites</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="text" id="url-input" class="form-control" placeholder="Enter website URL">
+                        <button class="btn btn-success mt-3" onclick="addBookmark()">Add Bookmark</button>
+                        <ul id="bookmark-list" class="bookmark-list mt-3 list-unstyled"></ul>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS, Popper.js, and jQuery -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script>
+        // Function to add bookmark
+        function addBookmark() {
+            const urlInput = document.getElementById('url-input');
+            const url = urlInput.value;
+            if (!url) return;
+
+            const list = document.getElementById('bookmark-list');
+            const listItem = document.createElement('li');
+            listItem.className = 'bookmark-item d-flex align-items-center mb-2';
+
+            // Extract the domain from the URL
+            const domain = (new URL(url)).hostname;
+
+            // Create the favicon URL
+            const faviconUrl = `https://${domain}/favicon.ico`;
+
+            // Create favicon image
+            const img = document.createElement('img');
+            img.src = faviconUrl;
+            img.alt = `${domain} favicon`;
+            img.style.width = '16px';
+            img.style.height = '16px';
+            img.className = 'mr-2';
+
+            // Create a link to the website
+            const link = document.createElement('a');
+            link.href = url;
+            link.textContent = url;
+            link.target = "_blank";
+            link.className = "text-truncate";
+
+            // Append favicon and link to the list item
+            listItem.appendChild(img);
+            listItem.appendChild(link);
+
+            // Append list item to the bookmark list
+            list.appendChild(listItem);
+
+            // Clear the input field
+            urlInput.value = '';
+        }
+    </script>
+
+</body>
+</html>
