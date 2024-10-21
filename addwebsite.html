@@ -6,6 +6,48 @@
     <title>Bookmark Modal with Bootstrap</title>
     <!-- Bootstrap CSS -->
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* 样式调整 */
+        .bookmark-icon {
+            width: 48px; /* 图标大小 */
+            height: 48px;
+            margin: 5px;
+            display: inline-block;
+            position: relative;
+            overflow: hidden;
+            border-radius: 5px; /* 圆角效果 */
+            transition: transform 0.3s;
+        }
+
+        .bookmark-icon:hover {
+            transform: scale(1.1); /* 悬浮效果 */
+        }
+
+        .bookmark-tooltip {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #333;
+            color: white;
+            padding: 5px;
+            border-radius: 3px;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+
+        .bookmark-icon:hover .bookmark-tooltip {
+            opacity: 1; /* 悬浮时显示提示 */
+        }
+
+        .bookmark-icon img {
+            width: 100%; /* 适应容器宽度 */
+            height: auto; /* 保持高度比 */
+            display: block; /* 使图片在块元素中显示 */
+        }
+    </style>
 </head>
 <body>
 
@@ -17,6 +59,9 @@
         <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#bookmarkModal">
             Add Favorite Websites
         </button>
+
+        <!-- The Bookmark Icons Section -->
+        <div id="bookmark-icons" class="mt-4"></div>
 
         <!-- The Modal -->
         <div class="modal fade" id="bookmarkModal" tabindex="-1" role="dialog" aria-labelledby="bookmarkModalLabel" aria-hidden="true">
@@ -47,47 +92,100 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 
     <script>
-        // Function to add bookmark
+        const MAX_BOOKMARKS = 10; // 设置书签数量上限
+
+        // Function to set cookie
+        function setCookie(name, value, days) {
+            const expires = new Date(Date.now() + days * 864e5).toUTCString();
+            document.cookie = name + '=' + encodeURIComponent(value) + '; expires=' + expires + '; path=/';
+        }
+
+        // Function to get cookie
+        function getCookie(name) {
+            return document.cookie.split('; ').reduce((r, v) => {
+                const parts = v.split('=');
+                return parts[0] === name ? decodeURIComponent(parts[1]) : r;
+            }, '');
+        }
+
+        // Function to load bookmarks from cookies
+        function loadBookmarks() {
+            const bookmarks = getCookie('bookmarks');
+            if (bookmarks) {
+                const bookmarksArray = JSON.parse(bookmarks);
+                bookmarksArray.forEach(({url, domain}) => {
+                    addBookmarkToIcons(url, domain);
+                });
+            }
+        }
+
+        // Function to add bookmark to the icons
+        function addBookmarkToIcons(url, domain) {
+            const iconsContainer = document.getElementById('bookmark-icons');
+            const bookmarkItem = document.createElement('a'); // 使用链接元素
+
+            bookmarkItem.className = 'bookmark-icon';
+            bookmarkItem.href = url; // 设置链接
+            bookmarkItem.target = "_blank"; // 新标签页打开链接
+
+            // Create the favicon URL
+            const faviconUrl = `https://${domain}/favicon.ico`;
+            const backupFaviconUrl = `https://www.google.com/s2/favicons?domain=${domain}`; // 使用 Google 提供的图标服务
+
+            // Create favicon image
+            const img = document.createElement('img');
+            img.src = faviconUrl; // 尝试从网站获取
+            img.alt = `${domain} favicon`;
+            img.onerror = () => {
+                img.src = backupFaviconUrl; // 如果失败，使用备选图标
+            };
+
+            // Create tooltip
+            const tooltip = document.createElement('div');
+            tooltip.className = 'bookmark-tooltip';
+            tooltip.textContent = url;
+
+            // Append favicon and tooltip to the bookmark item
+            bookmarkItem.appendChild(img);
+            bookmarkItem.appendChild(tooltip);
+
+            // Append bookmark item to the icons container
+            iconsContainer.appendChild(bookmarkItem);
+        }
+
+        // Update the addBookmark function
         function addBookmark() {
             const urlInput = document.getElementById('url-input');
             const url = urlInput.value;
             if (!url) return;
 
-            const list = document.getElementById('bookmark-list');
-            const listItem = document.createElement('li');
-            listItem.className = 'bookmark-item d-flex align-items-center mb-2';
-
-            // Extract the domain from the URL
             const domain = (new URL(url)).hostname;
 
-            // Create the favicon URL
-            const faviconUrl = `https://${domain}/favicon.ico`;
+            // Get existing bookmarks from cookies
+            const bookmarks = getCookie('bookmarks');
+            const bookmarksArray = bookmarks ? JSON.parse(bookmarks) : [];
 
-            // Create favicon image
-            const img = document.createElement('img');
-            img.src = faviconUrl;
-            img.alt = `${domain} favicon`;
-            img.style.width = '16px';
-            img.style.height = '16px';
-            img.className = 'mr-2';
+            // Check if the limit is reached
+            if (bookmarksArray.length >= MAX_BOOKMARKS) {
+                alert(`You can only have ${MAX_BOOKMARKS} bookmarks.`);
+                return;
+            }
 
-            // Create a link to the website
-            const link = document.createElement('a');
-            link.href = url;
-            link.textContent = url;
-            link.target = "_blank";
-            link.className = "text-truncate";
+            // Add the new bookmark to the array
+            bookmarksArray.push({ url, domain });
 
-            // Append favicon and link to the list item
-            listItem.appendChild(img);
-            listItem.appendChild(link);
+            // Store updated bookmarks in cookies
+            setCookie('bookmarks', JSON.stringify(bookmarksArray), 7); // expires in 7 days
 
-            // Append list item to the bookmark list
-            list.appendChild(listItem);
+            // Add bookmark to the icons display
+            addBookmarkToIcons(url, domain);
 
             // Clear the input field
             urlInput.value = '';
         }
+
+        // Load bookmarks when the page is loaded
+        window.onload = loadBookmarks;
     </script>
 
 </body>
