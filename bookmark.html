@@ -85,22 +85,33 @@
             img.onerror = () => {
                 img.src = backupFaviconUrl;
             };
-
+        
             const tooltip = document.createElement('div');
             tooltip.className = 'bookmark-tooltip';
             tooltip.textContent = url;
-
+        
+            // Add click event to open the URL
+            bookmarkItem.onclick = () => {
+                if (!deleteMode) {
+                    window.open(url, '_blank'); // 打开书签链接
+                }
+            };
+        
             // Delete button
             const deleteButton = document.createElement('button');
             deleteButton.className = 'delete-bookmark';
             deleteButton.textContent = '×';
-            deleteButton.onclick = () => deleteBookmark(domain);
-
+            deleteButton.onclick = (event) => {
+                event.stopPropagation(); // 防止触发父元素的点击事件
+                deleteBookmark(domain);
+            };
+        
             bookmarkItem.appendChild(img);
             bookmarkItem.appendChild(tooltip);
             bookmarkItem.appendChild(deleteButton);
             iconsContainer.appendChild(bookmarkItem);
         }
+
 
         function addBookmark() {
             const urlInput = document.getElementById('url-input');
@@ -132,12 +143,21 @@
             const bookmarks = getCookie('bookmarks');
             const bookmarksArray = bookmarks ? JSON.parse(bookmarks) : [];
             const updatedArray = bookmarksArray.filter(bookmark => bookmark.domain !== domain);
-
+                
             setCookie('bookmarks', JSON.stringify(updatedArray), 7);
-
-            document.getElementById('bookmark-icons').innerHTML = '';
-            loadBookmarks();
+                
+            // 删除当前书签图标
+            const iconsContainer = document.getElementById('bookmark-icons');
+            const bookmarkItems = iconsContainer.getElementsByClassName('bookmark-icon');
+            for (let i = 0; i < bookmarkItems.length; i++) {
+                const tooltip = bookmarkItems[i].querySelector('.bookmark-tooltip');
+                if (tooltip && tooltip.textContent.includes(domain)) {
+                    iconsContainer.removeChild(bookmarkItems[i]);
+                    break; // 只删除当前目标书签
+                }
+            }
         }
+
 
         function toggleDeleteMode() {
             deleteMode = !deleteMode;
